@@ -1,0 +1,31 @@
+ru:
+  activerecord:
+    models:
+      profile: "Профиль"
+      admin_profile: "Администратор"
+      regular_profile: "Обычный"
+    attributes:
+      user:
+        profile: "Профиль"
+        name: "Имя пользователя"
+        current_sign_in_at: "Последнее время входа"
+        current_sign_in_ip: "ip последнего входа"
+        current_password: "Текущий пароль"
+        email: "Email"
+        password: "Пароль"
+        password_confirmation: "Подтверждение пароля"
+        remember_me: "Запомнить меня"
+        reset_password_token: "Ссылка сброса пароля"
+        unlock_token: "Токен разблокировки"
+        profile_type: "Тип профиля"
+      profile:
+        user: "Пользователь"
+        type: "Тип профиля"
+        created_at: "Создан"
+        updated_at: "Обновлён"
+        profile_type/RegularProfile: "Обычный"
+        profile_type/AdminProfile: "Админ"
+      admin_profile:
+      regular_profile:
+  links:
+    home: "Главная страница"

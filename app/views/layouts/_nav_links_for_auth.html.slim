@@ -1,0 +1,7 @@
+- if user_signed_in?
+  - if current_user.try(:admin?)
+    li = link_to AdminProfile.model_name.human, '/cabinet'
+  li = link_to Profile.human_attribute_name(:user), edit_user_registration_path
+  li = link_to I18n.t('devise.sessions.sign_out'), destroy_user_session_path, method: :delete
+- else
+  li = link_to I18n.t('devise.shared.links.sign_in'), new_user_session_path

@@ -1,0 +1,10 @@
+development:
+  adapter: postgresql
+
+test:
+  adapter: postgresql
+
+production:
+  adapter: postgresql
+  url: postgres://localhost:6379/1
+  channel_prefix: htl_production

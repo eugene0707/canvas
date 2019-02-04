@@ -1,0 +1,130 @@
+stages:
+  - prepare
+  - test
+  - build
+  - deploy_dev
+  - deploy_beta
+
+variables:
+  IPADDRESS_DEV: "dev.hotel.n-core.ru"
+  IPADDRESS_BETA: "beta.hotel.n-core.ru"
+  DB_HOST: "192.168.150.132"
+  DB_PORT: "5432"
+  DB_NAME: "hotels"
+  DB_USER: "postgres"
+  DB_PASSWORD: "password"
+  ADMIN_NAME: First User
+  ADMIN_EMAIL: admin@example.com
+  ADMIN_PASSWORD: admin_password
+  DISABLE_DATABASE_ENVIRONMENT_CHECK: "1"
+  AIRBAKE_API_KEY: "api_key"
+  MAIL_HOST: "mail"
+  MAIL_SMTP_PORT: "25"
+  DOMAIN_NAME: "n-core.ru"
+  ERRBIT_ADRESS: "http://192.168.151.206:8080"
+  SECRET_KEY_BASE: "bede84eee2aa30cf382aa34ea6cf064a2fee3909c2eb05f7d2cf9390e132cfc9af2ddf291951ae3ba7a904a439d2dfb9b2236beb3129eb48b6f22b27b7327d25"
+
+
+
+job_bundle:
+  stage: prepare
+  script:
+    - bundle
+    - bundle exec rake db:drop db:create db:migrate RAILS_ENV=test
+    - bundle exec rake db:test:prepare RAILS_ENV=test
+
+job_tests:
+  stage: test
+  script:
+    - bundle exec rubocop
+    - RAILS_ENV=test ADMIN_NAME=admin ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=password bundle exec rspec
+  artifacts:
+    paths:
+      - tmp/capybara/
+    expire_in: 3 days
+    when: always
+
+job_build:
+  stage: build
+  script:
+    - echo "RAILS_ENV=production" > .env
+    - bundle pack --all
+    - rake assets:precompile RAILS_ENV=production
+    - mkdir Docker
+    - rsync -avzP /home/admsec/static/ibd-m_ruby_2.4.0/Dockerfile .
+    - cp -r /home/admsec/static/ibd-m_ruby_2.4.0/* Docker
+    - docker build -t ${PWD##*/}:$CI_BUILD_REF_NAME .
+    - docker tag -f ${PWD##*/}:$CI_BUILD_REF_NAME registry.a-soft.org/${PWD##*/}:$CI_BUILD_REF_NAME
+    - docker push registry.a-soft.org/${PWD##*/}:$CI_BUILD_REF_NAME
+  only:
+    - development
+    - master
+    - beta
+
+job_publish_dev:
+  stage: deploy_dev
+  script:
+    - ssh admsec@$IPADDRESS_DEV docker rm -f ${PWD##*/} || echo nothing to remove
+    - ssh admsec@$IPADDRESS_DEV docker pull registry.a-soft.org/${PWD##*/}:$CI_BUILD_REF_NAME
+    - ssh admsec@$IPADDRESS_DEV docker run -d --name ${PWD##*/} -p 80:80 \
+                                            -v /home/admsec/docker/${PWD##*/}/log:/application/log \
+                                            -v /home/admsec/docker/${PWD##*/}/log-supervisor:/var/log/supervisor \
+                                            -v /etc/localtime:/etc/localtime:ro \
+                                            -v /var/run/docker.sock:/var/run/docker.sock \
+                                            -e ETCD_SERVER=http://dev.hotel.n-core.ru:8080 \
+                                            -e DB_HOST=dev.hotel.n-core.ru \
+                                            -e DB_PORT=5432 \
+                                            -e DB_NAME=hotels \
+                                            -e DB_USER="postgres" \
+                                            -e DB_PASSWORD="password" \
+                                            -e AIRBAKE_API_KEY="8436bb089fefb3a6dd54210670d5bb3e" \
+                                            -e MAIL_HOST="mail" \
+                                            -e MAIL_SMTP_PORT="25" \
+                                            -e ADMIN_EMAIL=admin@example.com \
+                                            -e ADMIN_PASSWORD=admin_password \
+                                            -e ADMIN_NAME=admin \
+                                            -e DOMAIN_NAME="n-core.ru" \
+                                            -e ERRBIT_ADRESS="http://192.168.151.206:8080" \
+                                            -e MAIN_HOSTNAME=dev.hotel.n-core.ru \
+                                            -e RAILS_ENV=production \
+                                            -e TYPE=WEB \
+                                            -e MIGRATOR=true \
+                                            -e APP=${PWD##*/} \
+                                            -e SECRET_KEY_BASE=bede84eee2aa30cf382aa34ea6cf064a2fee3909c2eb05f7d2cf9390e132cfc9af2ddf291951ae3ba7a904a439d2dfb9b2236beb3129eb48b6f22b27b7327d25 \
+                                            --restart=always registry.a-soft.org/${PWD##*/}:$CI_BUILD_REF_NAME
+  only:
+    - master
+
+job_publish_beta:
+  stage: deploy_beta
+  script:
+    - ssh admsec@$IPADDRESS_BETA docker rm -f ${PWD##*/} || echo nothing to remove
+    - ssh admsec@$IPADDRESS_BETA docker pull registry.a-soft.org/${PWD##*/}:$CI_BUILD_REF_NAME
+    - ssh admsec@$IPADDRESS_BETA docker run -d --name ${PWD##*/} -p 80:80 \
+                                            -v /home/admsec/docker/${PWD##*/}/log:/application/log \
+                                            -v /home/admsec/docker/${PWD##*/}/log-supervisor:/var/log/supervisor \
+                                            -v /etc/localtime:/etc/localtime:ro \
+                                            -v /var/run/docker.sock:/var/run/docker.sock \
+                                            -e ETCD_SERVER=http://beta.hotel.n-core.ru:8080 \
+                                            -e DB_HOST=beta.hotel.n-core.ru \
+                                            -e DB_PORT=5432 \
+                                            -e DB_NAME=hotels \
+                                            -e DB_USER="postgres" \
+                                            -e DB_PASSWORD="password" \
+                                            -e AIRBAKE_API_KEY="2e114cf556cadb25167d1f6d465f17b8" \
+                                            -e MAIL_HOST="mail" \
+                                            -e MAIL_SMTP_PORT="25" \
+                                            -e ADMIN_EMAIL=admin@example.com \
+                                            -e ADMIN_PASSWORD=admin_password \
+                                            -e ADMIN_NAME=admin \
+                                            -e DOMAIN_NAME="n-core.ru" \
+                                            -e ERRBIT_ADRESS="http://192.168.151.206:8080" \
+                                            -e MAIN_HOSTNAME=beta.hotel.n-core.ru \
+                                            -e RAILS_ENV=production \
+                                            -e TYPE=WEB \
+                                            -e MIGRATOR=true \
+                                            -e APP=${PWD##*/} \
+                                            -e SECRET_KEY_BASE=bede84eee2aa30cf382aa34ea6cf064a2fee3909c2eb05f7d2cf9390e132cfc9af2ddf291951ae3ba7a904a439d2dfb9b2236beb3129eb48b6f22b27b7327d25 \
+                                            --restart=always registry.a-soft.org/${PWD##*/}:$CI_BUILD_REF_NAME
+  only:
+    - beta

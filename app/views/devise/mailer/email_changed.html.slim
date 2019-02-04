@@ -1,0 +1,6 @@
+p= t('.greeting'. recipient: @resource.email)
+
+- if @resource.try(:unconfirmed_email?)
+  p= t('.message_1', email: @resource.unconfirmed_email)
+- else
+  p= t('.message_2', email: @resource.email)

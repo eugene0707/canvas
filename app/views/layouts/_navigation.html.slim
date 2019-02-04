@@ -1,0 +1,27 @@
+/ Navigation
+nav.navbar.navbar-default.navbar-fixed-top.topnav role="navigation"
+  .container.topnav
+    / Brand and toggle get grouped for better mobile display
+    .navbar-header
+      button.navbar-toggle type="button" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+        span.sr-only Toggle navigation
+        span.icon-bar
+        span.icon-bar
+        span.icon-bar
+      a.navbar-brand.topnav href="#"
+        |  Start Bootstrap
+    / Collect the nav links, forms, and other content for toggling
+    .collapse.navbar-collapse id="bs-example-navbar-collapse-1"
+      ul.nav.navbar-nav.navbar-right
+        li
+          a href="#about"
+            | About
+        li
+          a href="#services"
+            |  Services
+        li
+          a href="#contact"
+            |  Contact
+        == render 'layouts/nav_links_for_auth'
+              / /.navbar-collapse
+              / /.container

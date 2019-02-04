@@ -1,0 +1,35 @@
+.page-header
+  = link_to new_user_path, class: 'btn btn-primary' do 
+    span.glyphicon.glyphicon-plus
+    |  New Tser
+  h1
+    | Listing users
+
+.table-responsive
+  table.table.table-striped.table-bordered.table-hover
+    thead
+      tr
+        th
+          | Email
+        th
+          | Password
+        th
+          | Name
+        th
+        th
+        th
+    tbody
+      - @users.each do | user |
+        tr
+          td
+            = user.email
+          td
+            = user.password
+          td
+            = user.name
+          td
+            = link_to 'Show', user
+          td
+            = link_to 'Edit', edit_user_path(user) 
+          td
+            = link_to 'Destroy', user, method: :delete, data: { confirm: 'Are you sure?' } 

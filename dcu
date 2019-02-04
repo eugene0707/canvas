@@ -1,0 +1,2 @@
+while inotifywait -e close_write .guard_result; do bash .guard_result; done &
+docker-compose up
